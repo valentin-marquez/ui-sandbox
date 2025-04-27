@@ -67,7 +67,6 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 		<div className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden p-8">
 			{/* Dot pattern background */}
 
-			<DotPattern dotColor="var(--border)" />
 			<div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-background shadow-lg">
 				{metadata && (
 					<div className="border-border border-b bg-muted/30 px-8 py-6">

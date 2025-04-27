@@ -1,6 +1,7 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import Playground from "@/components/playground/Playground";
+import { DotPattern } from "@/components/ui/dot-pattern";
 
 // Get component name from the URL
 const { component } = Astro.params;
@@ -15,6 +16,7 @@ const title = `${componentTitle} - UI Sandbox`;
 ---
 
 <Layout title={title}>
+	<DotPattern dotColor="var(--border)" client:only />
 	<div class="mx-auto px-4">
 		{
 			component ? (

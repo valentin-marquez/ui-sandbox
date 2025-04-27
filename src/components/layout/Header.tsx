@@ -78,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ className }) => {
   return (
     <motion.header
       className={cn(
-        "container mx-auto fixed top-0 left-0 right-0 z-50 border rounded-b-lg border-border w-full backdrop-blur-sm transition-all",
+        "container mx-auto fixed top-0 left-0 right-0 z-50 border-2 rounded-b-lg border-border w-full backdrop-blur-sm transition-all",
         isScrolled ? "border-b bg-background/90" : "bg-transparent",
         className
       )}
