@@ -36,7 +36,10 @@
     "files.associations": {
         "*.css": "tailwindcss",
     },
-    "cSpell.words": [
-        "Sandbox"
-    ]
+    "biome.lspBin": "node_modules/@biomejs/cli-win32-x64/biome.exe",
+    "biome.enabled": true,
+    "editor.codeActionsOnSave": {
+        "source.organizeImports.biome": "always",
+        "source.formatDocument.biome": "always",
+    }
 }

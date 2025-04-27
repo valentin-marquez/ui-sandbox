@@ -1,8 +1,8 @@
-import type React from "react";
-import { useEffect, useState } from "react";
-import type { ComponentMetadata } from "@/types/component";
 import { DotPattern } from "@/components/ui/dot-pattern";
 import { getComponentModule } from "@/lib/component-registry";
+import type { ComponentMetadata } from "@/types/component";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 interface PlaygroundProps {
 	componentName: string;
@@ -16,7 +16,6 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 	useEffect(() => {
 		const loadComponent = async () => {
 			try {
-				// Get component module from registry instead of dynamic import
 				const module = getComponentModule(componentName);
 
 				if (!module) {
@@ -24,7 +23,6 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 					return;
 				}
 
-				// Get the example function from the module
 				const ExampleComponent = module.example;
 				const componentMetadata = module.metadata ? module.metadata() : null;
 
@@ -49,7 +47,7 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 	if (error) {
 		return (
 			<div className="flex flex-col items-center justify-center p-8 text-destructive">
-				<p className="text-lg font-medium mb-2">Error Loading Component</p>
+				<p className="mb-2 font-medium text-lg">Error Loading Component</p>
 				<p>{error}</p>
 			</div>
 		);
@@ -66,7 +64,7 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 	}
 
 	return (
-		<div className="relative flex min-h-[600px] flex-col items-center overflow-hidden p-8">
+		<div className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden p-8">
 			{/* Dot pattern background */}
 
 			<DotPattern dotColor="var(--border)" />

@@ -6,17 +6,9 @@
  * import each component module and store it in a mapping.
  */
 
-// Import all component modules here
 import * as buttonModule from "@/components/ui/button";
-// Add other components as needed:
-// import * as cardModule from '@/components/ui/card';
-// import * as dialogModule from '@/components/ui/dialog';
-// etc.
-
-// Type for component modules
 export type ComponentModule = typeof buttonModule;
 
-// Component registry mapping
 export const componentRegistry: Record<string, ComponentModule> = {
 	button: buttonModule,
 	// Add other components as they're created:

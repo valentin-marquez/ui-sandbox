@@ -1,10 +1,10 @@
-import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
-import { cva, type VariantProps } from "class-variance-authority";
-import { motion, AnimatePresence, type HTMLMotionProps } from "framer-motion";
-import { Loader2, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ComponentMetadata } from "@/types/component";
+import { type VariantProps, cva } from "class-variance-authority";
+import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
+import { Loader2, Send } from "lucide-react";
+import { Slot } from "@radix-ui/react-slot";
+import * as React from "react";
 
 const loadingAnimations = {
 	top: {
@@ -14,7 +14,7 @@ const loadingAnimations = {
 		loaderEnter: { y: 0 },
 		transition: {
 			type: "spring",
-			stiffness: 300, // Increased stiffness for faster animation
+			stiffness: 300,
 			damping: 25,
 			mass: 0.5,
 		},
@@ -26,7 +26,7 @@ const loadingAnimations = {
 		loaderEnter: { y: 0 },
 		transition: {
 			type: "spring",
-			stiffness: 300, // Increased stiffness for faster animation
+			stiffness: 300,
 			damping: 25,
 			mass: 0.5,
 		},
@@ -115,6 +115,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 		};
 
 		return (
+			// @ts-expect-error: `asChild` is not a valid prop for motion.button
 			<motion.button
 				className={cn(buttonVariants({ variant, size }), className)}
 				transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -139,10 +140,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 								transition={animConfig.transition}
 							>
 								{icon ? (
-									// Render custom icon if provided
 									<Slot className={cn(getIconSize())}>{icon}</Slot>
 								) : (
-									// Default loading icon animation
 									<motion.div
 										animate={{ rotate: 360 }}
 										transition={{
@@ -175,61 +174,58 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = "Button";
+
 function example() {
-	const [loadingTop, setLoadingTop] = React.useState(false);
-	const [loadingBottom, setLoadingBottom] = React.useState(false);
-	const [sent, setSent] = React.useState(false);
+	const buttonConfigs = [
+		{
+			id: "top",
+			label: "Default Loader",
+			variant: "default" as const,
+			iconConfig: { side: "top" as const },
+			icon: null,
+		},
+		{
+			id: "bottom",
+			label: "Bottom Loader",
+			variant: "default" as const,
+			iconConfig: { side: "bottom" as const },
+			icon: null,
+		},
+		{
+			id: "send",
+			label: "Send Message",
+			variant: "secondary" as const,
+			iconConfig: { side: "bottom" as const },
+			icon: <Send className="text-primary" />,
+		},
+	];
 
-	const handleClickTop = () => {
-		setLoadingTop(true);
-		setTimeout(() => {
-			setLoadingTop(false);
-		}, 2000);
-	};
+	const [loadingStates, setLoadingStates] = React.useState(
+		Object.fromEntries(buttonConfigs.map(({ id }) => [id, false])),
+	);
 
-	const handleClickBottom = () => {
-		setLoadingBottom(true);
+	const handleClick = (id: string) => {
+		setLoadingStates((prev) => ({ ...prev, [id]: true }));
 		setTimeout(() => {
-			setLoadingBottom(false);
-		}, 2000);
-	};
-
-	const handleSend = () => {
-		setSent(true);
-		setTimeout(() => {
-			setSent(false);
+			setLoadingStates((prev) => ({ ...prev, [id]: false }));
 		}, 2000);
 	};
 
 	return (
 		<div className="flex flex-col items-start gap-4">
-			<Button
-				onClick={handleClickTop}
-				showIcon={loadingTop}
-				iconConfig={{ side: "top" }}
-				disabled={loadingTop}
-			>
-				Default Loader
-			</Button>
-
-			<Button
-				onClick={handleClickBottom}
-				showIcon={loadingBottom}
-				disabled={loadingBottom}
-			>
-				Bottom Loader
-			</Button>
-
-			<Button
-				variant="secondary"
-				onClick={handleSend}
-				showIcon={sent}
-				icon={<Send className="text-primary" />}
-				disabled={sent}
-				iconConfig={{ side: "top" }}
-			>
-				Send Message
-			</Button>
+			{buttonConfigs.map(({ id, label, variant, iconConfig, icon }) => (
+				<Button
+					key={id}
+					variant={variant}
+					onClick={() => handleClick(id)}
+					showIcon={loadingStates[id]}
+					icon={icon}
+					disabled={loadingStates[id]}
+					iconConfig={iconConfig}
+				>
+					{label}
+				</Button>
+			))}
 		</div>
 	);
 }

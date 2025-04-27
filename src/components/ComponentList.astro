@@ -7,39 +7,43 @@ interface Props {
 
 const { showPlaygroundLinks = false } = Astro.props;
 
-// Get all available components and their metadata
+// This now returns metadata from the component registry
 const availableComponents = await getComponentMetadata();
 
-// Sort components by status (completed first, then in-progress, then planned)
-const sortedComponents = availableComponents.sort((a, b) => {
+const componentsArray = Array.isArray(availableComponents)
+	? availableComponents
+	: [availableComponents].filter(Boolean);
+const sortedComponents = componentsArray.sort((a, b) => {
 	const statusOrder = { completed: 0, "in-progress": 1, planned: 2 };
-	return statusOrder[a.status] - statusOrder[b.status];
+	const statusA = a?.status || "planned";
+	const statusB = b?.status || "planned";
+	return statusOrder[statusA] - statusOrder[statusB];
 });
 ---
 
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 	{
-		sortedComponents.map((component) => (
-			<a
-				href={`/playground/${component.name.toLowerCase()}`}
-				class="block bg-card hover:bg-card/90 border border-border rounded-lg p-6 transition-colors"
-			>
-				<div class="flex justify-between items-start mb-4">
-					<h3 class="text-xl font-medium">{component.name}</h3>
-					<span
-						class={`text-xs px-2 py-1 rounded ${
-							component.status === "completed"
-								? "bg-primary/20 text-primary"
-								: component.status === "in-progress"
-									? "bg-chart-4/20 text-chart-4"
-									: "bg-muted text-muted-foreground"
-						}`}
-					>
-						{component.status}
-					</span>
-				</div>
-				<p class="text-muted-foreground">{component.description}</p>
-			</a>
-		))
+		sortedComponents
+			.filter((component) => component !== null)
+			.map((component) => (
+				<a
+					href={`/playground/${component.name.toLowerCase()}`}
+					class="block bg-card hover:bg-card/90 border border-border rounded-lg p-6 transition-colors">
+					<div class="flex justify-between items-start mb-4">
+						<h3 class="text-xl font-medium">{component.name}</h3>
+						<span
+							class={`text-xs px-2 py-1 rounded ${
+								component.status === "completed"
+									? "bg-primary/20 text-primary"
+									: component.status === "in-progress"
+										? "bg-chart-4/20 text-chart-4"
+										: "bg-muted text-muted-foreground"
+							}`}>
+							{component.status}
+						</span>
+					</div>
+					<p class="text-muted-foreground">{component.description}</p>
+				</a>
+			))
 	}
 </div>
