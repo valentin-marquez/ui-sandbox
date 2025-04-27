@@ -1,0 +1,27 @@
+{
+    "recommendations": [
+        // Core extensions
+        "biomejs.biome",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        // TypeScript/React support
+        "ms-vscode.vscode-typescript-next",
+        "dsznajder.es7-react-js-snippets",
+        // UI/UX helpers
+        "oven.bun-vscode",
+        "csstools.postcss",
+        "formulahendry.auto-rename-tag",
+        "streetsidesoftware.code-spell-checker",
+        // Git tools
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        // Productivity
+        "yzhang.markdown-all-in-one",
+        "christian-kohler.path-intellisense",
+        "naumovs.color-highlight",
+        // Radix UI specific
+        "miguelsolorio.symbols",
+        "voorjaar.windicss-intellisense"
+    ]
+}
