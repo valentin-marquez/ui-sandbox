@@ -37,6 +37,6 @@
         "*.css": "tailwindcss",
     },
     "cSpell.words": [
-        "Sandobox"
+        "Sandbox"
     ]
 }
