@@ -1,0 +1,29 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Playground from "@/components/playground/Playground";
+
+// Get component name from the URL
+const { component } = Astro.params;
+
+// Title case the component name for display
+const componentTitle = component
+	? component.charAt(0).toUpperCase() + component.slice(1)
+	: "Playground";
+
+// Set up the title
+const title = `${componentTitle} - UI Sandbox`;
+---
+
+<Layout title={title}>
+	<div class="mx-auto px-4">
+		{
+			component ? (
+				<Playground client:load componentName={component} />
+			) : (
+				<p class="text-muted-foreground text-center">
+					Select a component to display
+				</p>
+			)
+		}
+	</div>
+</Layout>

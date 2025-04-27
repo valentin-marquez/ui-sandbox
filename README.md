@@ -1,4 +1,4 @@
-# 🧩 UI Sandbox
+# 🧩 UI Sandobox
 
 A playground for experimenting with Radix UI primitives and slot patterns during free time.
 
@@ -8,9 +8,9 @@ This repository serves as a personal playground for exploring Radix UI component
 
 ## Tech Stack
 
-- Next.js (Frontend & Backend)
+- Astro (Frontend)
 - Radix UI Primitives
-- Biome (Linting & Formatting)
+- Biome (Linting & Formatting) and Prettier (Code Formatting)
 - Husky (Git Hooks)
 - TypeScript
 
