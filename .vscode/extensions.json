@@ -4,7 +4,6 @@
         "biomejs.biome",
         "bradlc.vscode-tailwindcss",
         "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
         // TypeScript/React support
         "ms-vscode.vscode-typescript-next",
         "dsznajder.es7-react-js-snippets",
@@ -22,6 +21,6 @@
         "naumovs.color-highlight",
         // Radix UI specific
         "miguelsolorio.symbols",
-        "voorjaar.windicss-intellisense"
+        "astro-build.astro-vscode"
     ]
 }
