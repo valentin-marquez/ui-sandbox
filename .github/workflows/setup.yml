@@ -1,0 +1,20 @@
+name: Setup Repository
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Make install-bun.sh executable
+        run: chmod +x .devcontainer/install-bun.sh
+        
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: make install-bun.sh executable"
