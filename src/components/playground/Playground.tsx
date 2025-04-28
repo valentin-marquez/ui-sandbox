@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Syntax } from "@/components/ui/syntax"; // Import the Syntax component
 import { getComponentModule } from "@/lib/component-registry";
 import type { ComponentMetadata } from "@/types/component";
 import { AnimatePresence, motion } from "motion/react";
@@ -127,13 +128,14 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 						>
 							{showCode ? (
 								<motion.div
-									className="rounded-xl border border-border bg-muted/20 p-1"
+									className="rounded-xl p-1"
 									initial={{ scaleY: 0.8 }}
 									animate={{ scaleY: 1 }}
 								>
-									<pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted p-4">
-										<code>{source}</code>
-									</pre>
+									{/* Replace the pre/code block with our Syntax component */}
+									<Syntax maxHeight="60vh" showLineNumbers={true}>
+										{source || ""}
+									</Syntax>
 								</motion.div>
 							) : (
 								<motion.div

@@ -1,4 +1,5 @@
 @import "@fontsource-variable/unbounded";
+@import "@fontsource-variable/inconsolata";
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
@@ -73,6 +74,7 @@
 
 @theme inline {
 	--font-sans: "Unbounded Variable", sans-serif;
+	--font-mono: "Consolas", "Inconsolata Variable", monospace;
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);

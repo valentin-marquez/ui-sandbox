@@ -1,12 +1,13 @@
-import { Button } from "@/components/ui/button";
 import { Syntax } from "@/components/ui/syntax";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnimatePresence, motion } from "motion/react";
 import * as React from "react";
 
 export default function SyntaxExample() {
 	const codeExamples = [
 		{
 			id: "simple-jsx",
-			title: "Simple JSX Component",
+			title: "JSX",
 			code: `
 function HelloWorld() {
     const greeting = "Hello, world!";
@@ -16,7 +17,7 @@ function HelloWorld() {
 		},
 		{
 			id: "react-hook",
-			title: "React Hook Example",
+			title: "React Hook",
 			code: `
 function Counter() {
     const [count, setCount] = useState(0);
@@ -38,7 +39,7 @@ function Counter() {
 		},
 		{
 			id: "ts-functions",
-			title: "TypeScript Functions",
+			title: "TypeScript",
 			code: `
 interface User {
     name: string;
@@ -55,28 +56,63 @@ const message = greetUser(user);
 		},
 	];
 
-	const [selectedExample, setSelectedExample] = React.useState(
-		codeExamples[0].id,
-	);
+	const [selectedId, setSelectedId] = React.useState(codeExamples[0].id);
 
 	return (
-		<div className="flex min-h-[400px] w-full flex-col items-center justify-center gap-6">
-			<div className="flex flex-wrap gap-2">
-				{codeExamples.map(({ id, title }) => (
-					<Button
-						key={id}
-						variant={selectedExample === id ? "default" : "outline"}
-						onClick={() => setSelectedExample(id)}
-					>
-						{title}
-					</Button>
-				))}
-			</div>
-
+		<div className="flex w-full flex-col items-center justify-center gap-2 px-2 sm:gap-4 sm:px-4">
 			<div className="w-full max-w-3xl">
-				<Syntax>
-					{codeExamples.find((ex) => ex.id === selectedExample)?.code || ""}
-				</Syntax>
+				<Tabs
+					defaultValue={selectedId}
+					onValueChange={setSelectedId}
+					className="w-full flex flex-col"
+				>
+					<div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm pb-2">
+						<TabsList className="w-full justify-start overflow-x-auto">
+							{codeExamples.map(({ id, title }) => (
+								<TabsTrigger key={id} value={id} className="min-w-max">
+									{title}
+								</TabsTrigger>
+							))}
+						</TabsList>
+					</div>
+
+					<div className="relative min-h-[300px] sm:min-h-[400px]">
+						<AnimatePresence mode="wait">
+							{codeExamples.map(
+								(example) =>
+									example.id === selectedId && (
+										<motion.div
+											key={example.id}
+											initial={{ opacity: 0, height: 0 }}
+											animate={{ opacity: 1, height: "auto" }}
+											exit={{ opacity: 0, height: 0 }}
+											transition={{
+												type: "spring",
+												stiffness: 400,
+												damping: 30,
+												duration: 0.3,
+											}}
+											className="w-full absolute left-0 right-0"
+										>
+											<TabsContent
+												key={example.id}
+												value={example.id}
+												className="mt-0 rounded-md border-0 data-[state=active]:block"
+												forceMount
+											>
+												<Syntax maxHeight="calc(100vh - 200px)">
+													{example.code}
+												</Syntax>
+												<div className="mt-2 text-sm text-muted-foreground">
+													<p>Example: {example.title}</p>
+												</div>
+											</TabsContent>
+										</motion.div>
+									),
+							)}
+						</AnimatePresence>
+					</div>
+				</Tabs>
 			</div>
 		</div>
 	);
