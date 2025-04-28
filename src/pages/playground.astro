@@ -1,13 +1,13 @@
 ---
 export const prerender = false;
-import Layout from "@/layouts/Layout.astro";
 import ComponentList from "@/components/ComponentList.astro";
+import Layout from "@/layouts/Layout.astro";
 
 const title = "Component Playground - UI Sandbox";
 ---
 
 <Layout title={title}>
-	<div class="container mx-auto py-10 px-4">
+	<div class="container mx-auto py-10">
 		<header class="mb-8 text-center">
 			<h1 class="text-3xl font-bold">Component Playground</h1>
 			<p class="text-muted-foreground mt-2">
@@ -16,14 +16,5 @@ const title = "Component Playground - UI Sandbox";
 		</header>
 
 		<ComponentList showPlaygroundLinks={true} />
-
-		<!-- Spacing elements for scroll testing -->
-		<div class="mt-20 space-y-96">
-			<div class="p-8 bg-muted rounded-lg">Scroll test section 1</div>
-			<div class="p-8 bg-muted rounded-lg">Scroll test section 2</div>
-			<div class="p-8 bg-muted rounded-lg">Scroll test section 3</div>
-			<div class="p-8 bg-muted rounded-lg">Scroll test section 4</div>
-			<div class="p-8 bg-muted rounded-lg">Scroll test section 5</div>
-		</div>
 	</div>
 </Layout>

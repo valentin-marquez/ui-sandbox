@@ -1,9 +1,8 @@
 import { cn } from "@/lib/utils";
-import type { ComponentMetadata } from "@/types/component";
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
-import { Loader2, Send } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import * as React from "react";
 
 const loadingAnimations = {
@@ -175,70 +174,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = "Button";
 
-function example() {
-	const buttonConfigs = [
-		{
-			id: "top",
-			label: "Default Loader",
-			variant: "default" as const,
-			iconConfig: { side: "top" as const },
-			icon: null,
-		},
-		{
-			id: "bottom",
-			label: "Bottom Loader",
-			variant: "default" as const,
-			iconConfig: { side: "bottom" as const },
-			icon: null,
-		},
-		{
-			id: "send",
-			label: "Send Message",
-			variant: "secondary" as const,
-			iconConfig: { side: "bottom" as const },
-			icon: <Send className="text-primary" />,
-		},
-	];
-
-	const [loadingStates, setLoadingStates] = React.useState(
-		Object.fromEntries(buttonConfigs.map(({ id }) => [id, false])),
-	);
-
-	const handleClick = (id: string) => {
-		setLoadingStates((prev) => ({ ...prev, [id]: true }));
-		setTimeout(() => {
-			setLoadingStates((prev) => ({ ...prev, [id]: false }));
-		}, 2000);
-	};
-
-	return (
-		<div className="flex min-h-[200px] w-full flex-col items-center justify-center gap-4">
-			{buttonConfigs.map(({ id, label, variant, iconConfig, icon }) => (
-				<Button
-					key={id}
-					variant={variant}
-					onClick={() => handleClick(id)}
-					showIcon={loadingStates[id]}
-					icon={icon}
-					disabled={loadingStates[id]}
-					iconConfig={iconConfig}
-				>
-					{label}
-				</Button>
-			))}
-		</div>
-	);
-}
-
-export function metadata(): ComponentMetadata {
-	return {
-		name: "Button",
-		description:
-			"A versatile, customizable button component that supports multiple variants, sizes, and states. Can be rendered as different HTML elements and includes accessibility features.",
-		status: "completed",
-		author: "valentin marquez",
-		lastUpdated: "2025-04-27",
-	};
-}
-
-export { Button, buttonVariants, example };
+export { Button, buttonVariants };

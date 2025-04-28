@@ -128,6 +128,33 @@
 	body {
 		@apply bg-background text-foreground font-sans;
 	}
+
+	/* Custom scrollbar */
+	::-webkit-scrollbar {
+		@apply w-2 h-2;
+	}
+
+	::-webkit-scrollbar-track {
+		@apply bg-muted rounded-full size-2 border border-border;
+	}
+
+	::-webkit-scrollbar-thumb {
+		@apply bg-primary/80 rounded-full transition-colors size-1 border border-border/50;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		@apply bg-primary ring-1 ring-ring;
+	}
+
+	::-webkit-scrollbar-corner {
+		@apply bg-muted/50;
+	}
+
+	/* Firefox support */
+	html {
+		scrollbar-width: thin;
+		scrollbar-color: var(--primary) var(--muted);
+	}
 }
 
 @layer utilities {

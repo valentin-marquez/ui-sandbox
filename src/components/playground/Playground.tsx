@@ -1,6 +1,7 @@
-import { DotPattern } from "@/components/ui/dot-pattern";
+import { Button } from "@/components/ui/button";
 import { getComponentModule } from "@/lib/component-registry";
 import type { ComponentMetadata } from "@/types/component";
+import { AnimatePresence, motion } from "motion/react";
 import type React from "react";
 import { useEffect, useState } from "react";
 
@@ -12,23 +13,27 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 	const [Example, setExample] = useState<React.ComponentType | null>(null);
 	const [metadata, setMetadata] = useState<ComponentMetadata | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [source, setSource] = useState<string | null>(null);
+	const [showCode, setShowCode] = useState(false); // Renombramos el estado para claridad
 
 	useEffect(() => {
 		const loadComponent = async () => {
 			try {
-				const module = getComponentModule(componentName);
+				const entry = getComponentModule(componentName);
 
-				if (!module) {
+				if (!entry) {
 					setError(`Component not found: ${componentName}`);
 					return;
 				}
 
-				const ExampleComponent = module.example;
-				const componentMetadata = module.metadata ? module.metadata() : null;
+				const ExampleComponent = entry.example;
+				const componentMetadata = entry.metadata;
+				const sourceCode = entry.source;
 
 				if (ExampleComponent) {
 					setExample(() => ExampleComponent);
 					setMetadata(componentMetadata);
+					setSource(sourceCode);
 					setError(null);
 				} else {
 					setError(`Example not found for component: ${componentName}`);
@@ -43,6 +48,10 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 			loadComponent();
 		}
 	}, [componentName]);
+
+	const handleToggle = () => {
+		setShowCode(!showCode);
+	};
 
 	if (error) {
 		return (
@@ -65,24 +74,31 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 
 	return (
 		<div className="relative flex min-h-[90vh] flex-col items-center justify-center overflow-hidden p-8">
-			{/* Dot pattern background */}
-
-			<div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl bg-background shadow-lg">
+			<div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl border-2 border-border bg-background shadow-lg">
 				{metadata && (
-					<div className="border-border border-b bg-muted/30 px-8 py-6">
+					<div className="border-border border-b-2 bg-muted/30 px-8 py-6">
 						<div className="mb-4 flex items-center justify-between">
 							<h1 className="font-bold text-2xl">{metadata.name}</h1>
-							<span
-								className={`rounded-full px-3 py-1 text-sm ${
-									metadata.status === "completed"
-										? "bg-primary/20 text-primary"
-										: metadata.status === "in-progress"
-											? "bg-chart-4/20 text-chart-4"
-											: "bg-muted text-muted-foreground"
-								}`}
-							>
-								{metadata.status}
-							</span>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									onClick={handleToggle}
+									className="flex items-center gap-1"
+								>
+									{showCode ? "Hide Code" : "View Code"}
+								</Button>
+								<span
+									className={`rounded-full px-3 py-1 text-sm ${
+										metadata.status === "completed"
+											? "bg-primary/20 text-primary"
+											: metadata.status === "in-progress"
+												? "bg-chart-4/20 text-chart-4"
+												: "bg-muted text-muted-foreground"
+									}`}
+								>
+									{metadata.status}
+								</span>
+							</div>
 						</div>
 						<p className="text-muted-foreground">{metadata.description}</p>
 						{metadata.author && (
@@ -94,10 +110,41 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 					</div>
 				)}
 
-				<div className="flex items-center justify-center p-8 backdrop-blur-sm">
-					<div className="w-full py-4">
-						<Example />
-					</div>
+				<div className="relative overflow-hidden p-2 backdrop-blur-sm">
+					<AnimatePresence mode="sync">
+						<motion.div
+							key={showCode ? "code" : "component"}
+							initial={{ opacity: 0, height: 0 }}
+							animate={{ opacity: 1, height: "auto" }}
+							exit={{ opacity: 0, height: 0 }}
+							transition={{
+								type: "spring",
+								stiffness: 400,
+								damping: 30,
+								duration: 0.3,
+							}}
+							className="w-full"
+						>
+							{showCode ? (
+								<motion.div
+									className="rounded-xl border border-border bg-muted/20 p-1"
+									initial={{ scaleY: 0.8 }}
+									animate={{ scaleY: 1 }}
+								>
+									<pre className="max-h-[60vh] overflow-auto rounded-lg bg-muted p-4">
+										<code>{source}</code>
+									</pre>
+								</motion.div>
+							) : (
+								<motion.div
+									className="rounded-lg bg-background p-6 shadow-sm"
+									transition={{ type: "spring", stiffness: 300 }}
+								>
+									<Example />
+								</motion.div>
+							)}
+						</motion.div>
+					</AnimatePresence>
 				</div>
 			</div>
 		</div>
