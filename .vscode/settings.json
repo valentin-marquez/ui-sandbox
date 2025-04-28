@@ -41,5 +41,8 @@
     "editor.codeActionsOnSave": {
         "source.organizeImports.biome": "always",
         "source.formatDocument.biome": "always",
-    }
+    },
+    "cSpell.words": [
+        "TSES"
+    ]
 }

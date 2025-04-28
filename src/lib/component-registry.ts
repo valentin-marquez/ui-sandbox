@@ -5,14 +5,20 @@
  * Each component has its implementation, example, metadata, and source code.
  */
 
+// Button component imports
 import * as buttonModule from "@/components/ui/button";
-import ButtonExample from "@/examples/button";
-import { metadata as buttonMetadata } from "@/metadata/button";
-import type { ComponentMetadata } from "@/types/component";
-
-// Import raw source code using Vite's ?raw feature
-// Note: This is needed in Vite to get the raw source as a string
 import buttonSource from "@/components/ui/button.tsx?raw";
+import buttonExample from "@/examples/button";
+import { metadata as buttonMetadata } from "@/metadata/button";
+
+// Syntax component imports
+import * as syntaxModule from "@/components/ui/syntax";
+import syntaxSource from "@/components/ui/syntax.tsx?raw";
+import syntaxExample from "@/examples/syntax";
+import { metadata as syntaxMetadata } from "@/metadata/syntax";
+
+// Types
+import type { ComponentMetadata } from "@/types/component";
 
 // Define the structure for a component entry in the registry
 export interface ComponentEntry {
@@ -30,11 +36,16 @@ export interface ComponentEntry {
 export const componentRegistry: Record<string, ComponentEntry> = {
 	button: {
 		component: buttonModule,
-		example: ButtonExample,
+		example: buttonExample,
 		metadata: buttonMetadata,
 		source: buttonSource,
 	},
-	// Add other components following the same pattern
+	syntax: {
+		component: syntaxModule,
+		example: syntaxExample,
+		metadata: syntaxMetadata,
+		source: syntaxSource,
+	},
 };
 
 /**
