@@ -1,7 +1,7 @@
 ---
 import "@/styles/globals.css";
-import Theme from "@/components/theme.astro";
 import { Header } from "@/components/layout/Header";
+import Theme from "@/components/theme.astro";
 
 interface Props {
 	title?: string;
@@ -32,13 +32,6 @@ const { title = "UI Sandbox" } = Astro.props;
 			<main class="flex-grow pt-[72px]">
 				<slot />
 			</main>
-
-			<footer class="py-6 border-t border-border mt-auto bg-background">
-				<div
-					class="container mx-auto px-4 text-center text-sm text-muted-foreground">
-					<p>UI Sandbox - A playground for UI components and patterns</p>
-				</div>
-			</footer>
 		</div>
 	</body>
 </html>

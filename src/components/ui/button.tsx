@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import type { ComponentMetadata } from "@/types/component";
+import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import { AnimatePresence, type HTMLMotionProps, motion } from "framer-motion";
 import { Loader2, Send } from "lucide-react";
-import { Slot } from "@radix-ui/react-slot";
 import * as React from "react";
 
 const loadingAnimations = {
@@ -212,7 +212,7 @@ function example() {
 	};
 
 	return (
-		<div className="flex flex-col items-start gap-4">
+		<div className="flex min-h-[200px] w-full flex-col items-center justify-center gap-4">
 			{buttonConfigs.map(({ id, label, variant, iconConfig, icon }) => (
 				<Button
 					key={id}
