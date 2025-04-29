@@ -1,15 +1,38 @@
 import * as ScrollArea from "@radix-ui/react-scroll-area";
+import * as Tabs from "@radix-ui/react-tabs";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { Token } from "acorn";
-import { Check, Copy } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, Copy, FileCode } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
+} from "react";
 import { Button } from "./button";
 
-// Necesitarás instalar estas dependencias:
-// npm install acorn acorn-jsx acorn-typescript
+// Context for managing shared state between SyntaxContainer and Syntax
+interface SyntaxContextValue {
+	activeTab: string;
+	setActiveTab: (value: string) => void;
+	registerTab: (id: string, filename: string) => void;
+	tabs: Array<{ id: string; filename: string }>;
+}
 
+const SyntaxContext = createContext<SyntaxContextValue | null>(null);
+
+export const useSyntaxContext = () => {
+	const context = useContext(SyntaxContext);
+	if (!context) {
+		throw new Error("Syntax components must be used within a SyntaxContainer");
+	}
+	return context;
+};
+
+// Existing color definitions and keywords
 const tokenColors = {
 	keyword: "text-primary ",
 	string: "text-chart-1",
@@ -30,7 +53,7 @@ const tokenColors = {
 	interface: "text-chart-3 ",
 };
 
-// Lista de palabras clave
+// List of keywords
 const keywords = [
 	"await",
 	"break",
@@ -84,21 +107,113 @@ const keywords = [
 	"from",
 ];
 
+// New container component for multiple syntax tabs
+interface SyntaxContainerProps {
+	children: ReactNode;
+	defaultTab?: string;
+	maxHeight?: string;
+}
+
+export const SyntaxContainer = ({
+	children,
+	defaultTab,
+	maxHeight = "500px",
+}: SyntaxContainerProps) => {
+	const [activeTab, setActiveTab] = useState<string>("");
+	const [tabs, setTabs] = useState<Array<{ id: string; filename: string }>>([]);
+
+	const registerTab = useCallback(
+		(id: string, filename: string) => {
+			setTabs((prevTabs) => {
+				const exists = prevTabs.some((tab) => tab.id === id);
+				if (exists) return prevTabs;
+				return [...prevTabs, { id, filename }];
+			});
+
+			// Set the first tab as active by default if no default tab is specified
+			if (!activeTab && !defaultTab) {
+				setActiveTab(id);
+			}
+		},
+		[activeTab, defaultTab],
+	);
+
+	// Set default tab when tabs are loaded
+	useEffect(() => {
+		if (defaultTab && tabs.some((tab) => tab.id === defaultTab)) {
+			setActiveTab(defaultTab);
+		} else if (tabs.length > 0 && !activeTab) {
+			setActiveTab(tabs[0].id);
+		}
+	}, [tabs, defaultTab, activeTab]);
+
+	return (
+		<SyntaxContext.Provider
+			value={{ activeTab, setActiveTab, registerTab, tabs }}
+		>
+			<div className="rounded-md border bg-card shadow-sm">
+				{tabs.length > 1 && (
+					<Tabs.Root
+						value={activeTab}
+						onValueChange={setActiveTab}
+						className="w-full"
+					>
+						<Tabs.List className="flex border-b bg-muted/40 px-2">
+							{tabs.map((tab) => (
+								<Tabs.Trigger
+									key={tab.id}
+									value={tab.id}
+									className="flex items-center gap-1.5 px-3 py-2 text-sm outline-none transition-all hover:bg-muted/60 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:font-medium"
+								>
+									<FileCode size={14} />
+									{tab.filename}
+								</Tabs.Trigger>
+							))}
+						</Tabs.List>
+						{children}
+					</Tabs.Root>
+				)}
+				{tabs.length <= 1 && <div style={{ maxHeight }}>{children}</div>}
+			</div>
+		</SyntaxContext.Provider>
+	);
+};
+
+// Modified syntax component to work with or without container
 interface SyntaxProps {
 	children: ReactNode;
 	showLineNumbers?: boolean;
 	maxHeight?: string;
+	filename?: string;
+	id?: string;
 }
 
 export const Syntax = ({
 	children,
 	showLineNumbers = true,
 	maxHeight = "500px",
+	filename,
+	id,
 }: SyntaxProps) => {
+	const syntaxContext = useContext(SyntaxContext);
+	const isStandalone = !syntaxContext;
+	const uniqueId = id || filename || Math.random().toString(36).substring(2, 9);
+
 	const [lines, setLines] = useState<Token[][]>([]);
 	const [parseError, setParseError] = useState<string | null>(null);
 	const [copied, setCopied] = useState(false);
 	const [isHovering, setIsHovering] = useState(false);
+
+	// Register with parent container if available
+	useEffect(() => {
+		if (syntaxContext && filename) {
+			syntaxContext.registerTab(uniqueId, filename);
+		}
+	}, [syntaxContext, uniqueId, filename]);
+
+	// Check if this tab is active or if it's a standalone component
+	const isVisible =
+		isStandalone || (syntaxContext && syntaxContext.activeTab === uniqueId);
 
 	// Convert children to string
 	const code = children?.toString() || "";
@@ -116,6 +231,9 @@ export const Syntax = ({
 	}, [code]);
 
 	useEffect(() => {
+		// Only parse code if this tab is visible or it's a standalone component
+		if (!isVisible) return;
+
 		const loadAcorn = async () => {
 			try {
 				// Importamos dinámicamente para asegurar que exista en el entorno del navegador
@@ -473,14 +591,24 @@ export const Syntax = ({
 		};
 
 		loadAcorn();
-	}, [code]);
+	}, [code, isVisible]);
+
+	// If this tab is not active and it's part of a container, don't render it
+	if (!isVisible) {
+		return null;
+	}
 
 	// Si no hay líneas procesadas, mostramos texto plano
 	if (lines.length === 0) {
 		const codeLines = code.split("\n");
 		return (
-			<ScrollArea.Root className="rounded-md border bg-card">
-				<ScrollArea.Viewport className="p-4" style={{ maxHeight }}>
+			<ScrollArea.Root
+				className={isStandalone ? "rounded-md border bg-card" : ""}
+			>
+				<ScrollArea.Viewport
+					className="p-4"
+					style={{ maxHeight: isStandalone ? maxHeight : undefined }}
+				>
 					<pre className="font-mono text-sm relative">
 						{codeLines.map((line, lineIndex) => (
 							<div key={`line-${lineIndex}-${line}`} className="flex">
@@ -501,20 +629,29 @@ export const Syntax = ({
 		);
 	}
 
-	return (
+	const syntaxContent = (
 		<Tooltip.Provider>
 			<div
 				className="relative"
 				onMouseEnter={() => setIsHovering(true)}
 				onMouseLeave={() => setIsHovering(false)}
 			>
-				<ScrollArea.Root className="rounded-md border bg-card shadow-sm transition-all duration-200">
+				<ScrollArea.Root
+					className={
+						isStandalone
+							? "rounded-md border bg-card shadow-sm transition-all duration-200"
+							: ""
+					}
+				>
 					{parseError && (
 						<div className="border-b bg-destructive/10 p-2 text-destructive text-xs">
 							Error: {parseError}
 						</div>
 					)}
-					<ScrollArea.Viewport className="p-4" style={{ maxHeight }}>
+					<ScrollArea.Viewport
+						className="p-4"
+						style={{ maxHeight: isStandalone ? maxHeight : undefined }}
+					>
 						<pre className="font-mono text-sm">
 							{lines.map((lineTokens: Token[], lineIndex: number) => (
 								<div
@@ -558,7 +695,7 @@ export const Syntax = ({
 					<AnimatePresence>
 						{isHovering && (
 							<motion.div
-								className="absolute right-2 top-2"
+								className="absolute top-2 right-2"
 								initial={{ opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0, scale: 0.9 }}
@@ -577,7 +714,7 @@ export const Syntax = ({
 									</Tooltip.Trigger>
 									<Tooltip.Portal>
 										<Tooltip.Content
-											className="bg-popover text-popover-foreground px-3 py-1.5 text-sm rounded-md shadow-md"
+											className="rounded-md bg-popover px-3 py-1.5 text-popover-foreground text-sm shadow-md"
 											side="left"
 											sideOffset={5}
 										>
@@ -592,5 +729,11 @@ export const Syntax = ({
 				</ScrollArea.Root>
 			</div>
 		</Tooltip.Provider>
+	);
+
+	return isStandalone ? (
+		syntaxContent
+	) : (
+		<Tabs.Content value={uniqueId}>{syntaxContent}</Tabs.Content>
 	);
 };

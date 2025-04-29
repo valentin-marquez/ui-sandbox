@@ -1,119 +1,129 @@
-import { Syntax } from "@/components/ui/syntax";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AnimatePresence, motion } from "motion/react";
-import * as React from "react";
+// Example of how to use the new tabbed syntax highlighting component
 
-export default function SyntaxExample() {
-	const codeExamples = [
-		{
-			id: "simple-jsx",
-			title: "JSX",
-			code: `
-function HelloWorld() {
-    const greeting = "Hello, world!";
-    return <h1>{greeting}</h1>;
+import { Syntax, SyntaxContainer } from "@/components/ui/syntax";
+import React from "react";
+
+const SyntaxExample = () => {
+	// Example code snippets
+	const buttonCode = `import React from 'react';
+import { cn } from "@/lib/utils";
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
-            `.trim(),
-		},
-		{
-			id: "react-hook",
-			title: "React Hook",
-			code: `
-function Counter() {
-    const [count, setCount] = useState(0);
-    
-    useEffect(() => {
-        document.title = \`You clicked \${count} times\`;
-    }, [count]);
-    
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
     return (
-        <div>
-            <p>You clicked {count} times</p>
-            <button onClick={() => setCount(count + 1)}>
-                Click me
-            </button>
-        </div>
-    );
-}
-            `.trim(),
-		},
-		{
-			id: "ts-functions",
-			title: "TypeScript",
-			code: `
-interface User {
-    name: string;
-    age: number;
+      <button
+        className={cn(
+          "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+          "disabled:opacity-50 disabled:pointer-events-none",
+          // Variant styles
+          variant === 'default' && "bg-primary text-primary-foreground hover:bg-primary/90",
+          variant === 'destructive' && "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          variant === 'outline' && "border border-input hover:bg-accent hover:text-accent-foreground",
+          // Size styles
+          size === 'default' && "h-10 py-2 px-4",
+          size === 'sm' && "h-9 px-3",
+          size === 'lg' && "h-11 px-8",
+          size === 'icon' && "h-10 w-10",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)`;
+
+	const cardCode = `import React from 'react';
+import { cn } from "@/lib/utils";
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn(
+      "text-2xl font-semibold leading-none tracking-tight",
+      className
+    )}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+export { Card, CardHeader, CardTitle };`;
+
+	const scriptCode = `// Simple JavaScript example
+let hello = "hello brightness"
+console.log(hello, "my old friend")
+
+// Function to calculate fibonacci
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n-1) + fibonacci(n-2);
 }
 
-function greetUser(user: User): string {
-    return \`Hello, \${user.name}! You are \${user.age} years old.\`;
-}
-
-const user = { name: "John", age: 30 };
-const message = greetUser(user);
-            `.trim(),
-		},
-	];
-
-	const [selectedId, setSelectedId] = React.useState(codeExamples[0].id);
+// Using the function
+for (let i = 0; i < 10; i++) {
+  console.log(\`Fibonacci \${i}: \${fibonacci(i)}\`);
+}`;
 
 	return (
-		<div className="flex w-full flex-col items-center justify-center gap-2 px-2 sm:gap-4 sm:px-4">
-			<div className="w-full max-w-3xl">
-				<Tabs
-					defaultValue={selectedId}
-					onValueChange={setSelectedId}
-					className="w-full flex flex-col"
-				>
-					<div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm pb-2">
-						<TabsList className="w-full justify-start overflow-x-auto">
-							{codeExamples.map(({ id, title }) => (
-								<TabsTrigger key={id} value={id} className="min-w-max">
-									{title}
-								</TabsTrigger>
-							))}
-						</TabsList>
-					</div>
+		<div className="space-y-8 p-4">
+			<h1 className="text-2xl font-bold">Code Examples</h1>
 
-					<div className="relative min-h-[300px] sm:min-h-[400px]">
-						<AnimatePresence mode="wait">
-							{codeExamples.map(
-								(example) =>
-									example.id === selectedId && (
-										<motion.div
-											key={example.id}
-											initial={{ opacity: 0, height: 0 }}
-											animate={{ opacity: 1, height: "auto" }}
-											exit={{ opacity: 0, height: 0 }}
-											transition={{
-												type: "spring",
-												stiffness: 400,
-												damping: 30,
-												duration: 0.3,
-											}}
-											className="w-full absolute left-0 right-0"
-										>
-											<TabsContent
-												key={example.id}
-												value={example.id}
-												className="mt-0 rounded-md border-0 data-[state=active]:block"
-												forceMount
-											>
-												<Syntax maxHeight="calc(100vh - 200px)">
-													{example.code}
-												</Syntax>
-												<div className="mt-2 text-sm text-muted-foreground">
-													<p>Example: {example.title}</p>
-												</div>
-											</TabsContent>
-										</motion.div>
-									),
-							)}
-						</AnimatePresence>
-					</div>
-				</Tabs>
+			{/* Example 1: Single syntax block */}
+			<div>
+				<h2 className="text-xl font-semibold mb-2">Simple Code Block</h2>
+				<Syntax filename="shiny.js">{scriptCode}</Syntax>
+			</div>
+
+			{/* Example 2: Multiple syntax blocks in tabs */}
+			<div>
+				<h2 className="mb-2 font-semibold text-xl">Component Library</h2>
+				<SyntaxContainer defaultTab="button">
+					<Syntax id="button" filename="button.tsx">
+						{buttonCode}
+					</Syntax>
+					<Syntax id="card" filename="card.tsx">
+						{cardCode}
+					</Syntax>
+				</SyntaxContainer>
 			</div>
 		</div>
 	);
-}
+};
+
+export default SyntaxExample;

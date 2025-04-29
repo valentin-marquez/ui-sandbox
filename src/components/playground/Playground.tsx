@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Syntax } from "@/components/ui/syntax"; // Import the Syntax component
+import { Syntax, SyntaxContainer } from "@/components/ui/syntax"; // Import the Syntax component
 import { getComponentModule } from "@/lib/component-registry";
 import type { ComponentMetadata } from "@/types/component";
 import { AnimatePresence, motion } from "motion/react";
@@ -80,7 +80,6 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 					<div className="border-border border-b-2 bg-muted/30 px-8 py-6">
 						<div className="mb-4 flex items-center justify-between">
 							<h1 className="font-bold text-2xl">{metadata.name}</h1>
-							<div className="flex items-center gap-2">
 								<Button
 									variant="outline"
 									onClick={handleToggle}
@@ -88,6 +87,7 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 								>
 									{showCode ? "Hide Code" : "View Code"}
 								</Button>
+							<div className="flex items-center gap-2">
 								<span
 									className={`rounded-full px-3 py-1 text-sm ${
 										metadata.status === "completed"
@@ -132,10 +132,21 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 									initial={{ scaleY: 0.8 }}
 									animate={{ scaleY: 1 }}
 								>
-									{/* Replace the pre/code block with our Syntax component */}
-									<Syntax maxHeight="60vh" showLineNumbers={true}>
-										{source || ""}
-									</Syntax>
+									{source ? (
+										<SyntaxContainer defaultTab={componentName}>
+											<Syntax
+												id={componentName}
+												filename={`${componentName}.tsx`}
+												showLineNumbers={true}
+											>
+												{source}
+											</Syntax>
+										</SyntaxContainer>
+									) : (
+										<div className="p-4 text-center text-muted-foreground">
+											Source code not available
+										</div>
+									)}
 								</motion.div>
 							) : (
 								<motion.div
