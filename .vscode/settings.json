@@ -43,6 +43,7 @@
         "source.formatDocument.biome": "always",
     },
     "cSpell.words": [
+        "inconsolata",
         "TSES"
     ]
 }

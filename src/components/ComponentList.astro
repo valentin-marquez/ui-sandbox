@@ -3,9 +3,10 @@ import { getComponentMetadata } from "@/lib/component-utils";
 
 interface Props {
 	showPlaygroundLinks?: boolean;
+	sortBy?: "status" | "date";
 }
 
-const { showPlaygroundLinks = false } = Astro.props;
+const { showPlaygroundLinks = false, sortBy = "status" } = Astro.props;
 
 // This now returns metadata from the component registry
 const availableComponents = await getComponentMetadata();
@@ -13,7 +14,14 @@ const availableComponents = await getComponentMetadata();
 const componentsArray = Array.isArray(availableComponents)
 	? availableComponents
 	: [availableComponents].filter(Boolean);
+
+// Sort components based on the sortBy prop
 const sortedComponents = componentsArray.sort((a, b) => {
+	if (sortBy === "date" && a?.lastUpdated && b?.lastUpdated) {
+		return (
+			new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+		);
+	}
 	const statusOrder = { completed: 0, "in-progress": 1, planned: 2 };
 	const statusA = a?.status || "planned";
 	const statusB = b?.status || "planned";

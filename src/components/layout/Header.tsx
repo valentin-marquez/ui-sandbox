@@ -100,8 +100,6 @@ export const Header: React.FC<HeaderProps> = ({ className }) => {
 					<motion.a
 						href="/"
 						className="flex items-center gap-2 font-bold text-xl transition-colors hover:text-primary"
-						whileHover={{ scale: 1.03 }}
-						whileTap={{ scale: 0.97 }}
 					>
 						<img src="/favicon.svg" alt="UI Sandbox Logo" className="size-6" />
 						<span>UI Sandbox</span>

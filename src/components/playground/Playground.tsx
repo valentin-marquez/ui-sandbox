@@ -78,16 +78,47 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 			<div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-xl border-2 border-border bg-background shadow-lg">
 				{metadata && (
 					<div className="border-border border-b-2 bg-muted/30 px-8 py-6">
-						<div className="mb-4 flex items-center justify-between">
+						<div className="mb-4 flex items-center justify-between gap-4">
 							<h1 className="font-bold text-2xl">{metadata.name}</h1>
-								<Button
-									variant="outline"
-									onClick={handleToggle}
-									className="flex items-center gap-1"
-								>
-									{showCode ? "Hide Code" : "View Code"}
-								</Button>
-							<div className="flex items-center gap-2">
+
+							<div className="flex items-center gap-4">
+								{/* Nuevo switch animado */}
+								<motion.div className="flex items-center gap-2">
+									<span
+										className={`font-medium text-sm transition-opacity ${showCode ? "opacity-50" : "opacity-100"}`}
+									>
+										No
+									</span>
+
+									<button
+										type="button"
+										onClick={handleToggle}
+										className="relative h-8 w-14 cursor-pointer rounded-full border border-border bg-card transition-colors hover:bg-muted"
+										role="switch"
+										aria-checked={showCode}
+									>
+										<motion.div
+											className="absolute top-1 h-6 w-6 rounded-full shadow-sm"
+											initial={false}
+											animate={{
+												x: showCode ? 26 : 4,
+												backgroundColor: "var(--primary)",
+											}}
+											transition={{
+												type: "spring",
+												stiffness: 400,
+												damping: 30,
+											}}
+										/>
+									</button>
+
+									<span
+										className={`font-medium text-sm transition-opacity ${showCode ? "opacity-100" : "opacity-50"}`}
+									>
+										Code
+									</span>
+								</motion.div>
+
 								<span
 									className={`rounded-full px-3 py-1 text-sm ${
 										metadata.status === "completed"
@@ -101,6 +132,7 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 								</span>
 							</div>
 						</div>
+
 						<p className="text-muted-foreground">{metadata.description}</p>
 						{metadata.author && (
 							<p className="mt-2 text-muted-foreground text-sm">
@@ -115,7 +147,7 @@ const Playground: React.FC<PlaygroundProps> = ({ componentName }) => {
 					<AnimatePresence mode="sync">
 						<motion.div
 							key={showCode ? "code" : "component"}
-							initial={{ opacity: 0, height: 0 }}
+							initial={false}
 							animate={{ opacity: 1, height: "auto" }}
 							exit={{ opacity: 0, height: 0 }}
 							transition={{

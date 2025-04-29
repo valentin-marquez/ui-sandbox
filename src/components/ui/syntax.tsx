@@ -121,59 +121,54 @@ export const SyntaxContainer = ({
 }: SyntaxContainerProps) => {
 	const [activeTab, setActiveTab] = useState<string>("");
 	const [tabs, setTabs] = useState<Array<{ id: string; filename: string }>>([]);
+	const [initialTabSet, setInitialTabSet] = useState(false);
 
-	const registerTab = useCallback(
-		(id: string, filename: string) => {
-			setTabs((prevTabs) => {
-				const exists = prevTabs.some((tab) => tab.id === id);
-				if (exists) return prevTabs;
-				return [...prevTabs, { id, filename }];
-			});
+	const registerTab = useCallback((id: string, filename: string) => {
+		setTabs((prevTabs) => {
+			const exists = prevTabs.some((tab) => tab.id === id);
+			if (exists) return prevTabs;
+			return [...prevTabs, { id, filename }];
+		});
 
-			// Set the first tab as active by default if no default tab is specified
-			if (!activeTab && !defaultTab) {
-				setActiveTab(id);
-			}
-		},
-		[activeTab, defaultTab],
-	);
+		// Don't set the active tab here anymore
+	}, []);
 
-	// Set default tab when tabs are loaded
+	// Modified useEffect to only set default tab once during initialization
 	useEffect(() => {
-		if (defaultTab && tabs.some((tab) => tab.id === defaultTab)) {
-			setActiveTab(defaultTab);
-		} else if (tabs.length > 0 && !activeTab) {
-			setActiveTab(tabs[0].id);
+		if (!initialTabSet && tabs.length > 0) {
+			if (defaultTab && tabs.some((tab) => tab.id === defaultTab)) {
+				setActiveTab(defaultTab);
+			} else {
+				setActiveTab(tabs[0].id);
+			}
+			setInitialTabSet(true);
 		}
-	}, [tabs, defaultTab, activeTab]);
+	}, [tabs, defaultTab, initialTabSet]);
 
 	return (
 		<SyntaxContext.Provider
 			value={{ activeTab, setActiveTab, registerTab, tabs }}
 		>
 			<div className="rounded-md border bg-card shadow-sm">
-				{tabs.length > 1 && (
-					<Tabs.Root
-						value={activeTab}
-						onValueChange={setActiveTab}
-						className="w-full"
-					>
-						<Tabs.List className="flex border-b bg-muted/40 px-2">
-							{tabs.map((tab) => (
-								<Tabs.Trigger
-									key={tab.id}
-									value={tab.id}
-									className="flex items-center gap-1.5 px-3 py-2 text-sm outline-none transition-all hover:bg-muted/60 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:font-medium"
-								>
-									<FileCode size={14} />
-									{tab.filename}
-								</Tabs.Trigger>
-							))}
-						</Tabs.List>
-						{children}
-					</Tabs.Root>
-				)}
-				{tabs.length <= 1 && <div style={{ maxHeight }}>{children}</div>}
+				<Tabs.Root
+					value={activeTab}
+					onValueChange={setActiveTab}
+					className="w-full"
+				>
+					<Tabs.List className="flex border-b bg-muted/40 px-2">
+						{tabs.map((tab) => (
+							<Tabs.Trigger
+								key={tab.id}
+								value={tab.id}
+								className="flex items-center gap-1.5 px-3 py-2 text-sm outline-none transition-all hover:bg-muted/60 data-[state=active]:border-primary data-[state=active]:border-b-2 data-[state=active]:font-medium"
+							>
+								<FileCode size={14} />
+								{tab.filename}
+							</Tabs.Trigger>
+						))}
+					</Tabs.List>
+					{children}
+				</Tabs.Root>
 			</div>
 		</SyntaxContext.Provider>
 	);
@@ -307,7 +302,6 @@ export const Syntax = ({
 										keyword.length,
 										match[0].indexOf(interfaceName, keyword.length),
 									),
-									// @ts-expected-error: TypeScript doesn't know this is whitespace
 									type: "whitespace",
 									start: keywordEnd,
 									end: nameStart,
