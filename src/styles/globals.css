@@ -1,6 +1,7 @@
 @import "@fontsource-variable/unbounded";
 @import "@fontsource-variable/inconsolata";
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 :root {

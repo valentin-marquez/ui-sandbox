@@ -1,7 +1,7 @@
 import * as ScrollArea from "@radix-ui/react-scroll-area";
 import * as Tabs from "@radix-ui/react-tabs";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import type { Token } from "acorn";
+import type { Token as AcornToken } from "acorn";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, Copy, FileCode } from "lucide-react";
 import type { ReactNode } from "react";
@@ -10,11 +10,21 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 import { Button } from "./button";
 
-// Context for managing shared state between SyntaxContainer and Syntax
+// Define our custom token interface for syntax highlighting
+interface SyntaxToken {
+	value: string;
+	type: string;
+	start: number;
+	end: number;
+	line: number;
+}
+
+// Context for shared state between SyntaxContainer and Syntax components
 interface SyntaxContextValue {
 	activeTab: string;
 	setActiveTab: (value: string) => void;
@@ -32,7 +42,6 @@ export const useSyntaxContext = () => {
 	return context;
 };
 
-// Existing color definitions and keywords
 const tokenColors = {
 	keyword: "text-primary ",
 	string: "text-chart-1",
@@ -48,12 +57,10 @@ const tokenColors = {
 	assignment: "text-chart-5",
 	parameter: "text-accent-foreground",
 	property: "text-chart-2/90",
-	// Type-specific tokens (TypeScript)
 	type: "text-chart-4 ",
 	interface: "text-chart-3 ",
 };
 
-// List of keywords
 const keywords = [
 	"await",
 	"break",
@@ -107,7 +114,7 @@ const keywords = [
 	"from",
 ];
 
-// New container component for multiple syntax tabs
+// Container component to manage multiple syntax tabs
 interface SyntaxContainerProps {
 	children: ReactNode;
 	defaultTab?: string;
@@ -129,11 +136,9 @@ export const SyntaxContainer = ({
 			if (exists) return prevTabs;
 			return [...prevTabs, { id, filename }];
 		});
-
-		// Don't set the active tab here anymore
 	}, []);
 
-	// Modified useEffect to only set default tab once during initialization
+	// Set default tab only once during initialization
 	useEffect(() => {
 		if (!initialTabSet && tabs.length > 0) {
 			if (defaultTab && tabs.some((tab) => tab.id === defaultTab)) {
@@ -174,7 +179,7 @@ export const SyntaxContainer = ({
 	);
 };
 
-// Modified syntax component to work with or without container
+// Syntax component for code highlighting, works with or without container
 interface SyntaxProps {
 	children: ReactNode;
 	showLineNumbers?: boolean;
@@ -193,8 +198,9 @@ export const Syntax = ({
 	const syntaxContext = useContext(SyntaxContext);
 	const isStandalone = !syntaxContext;
 	const uniqueId = id || filename || Math.random().toString(36).substring(2, 9);
+	const codeRef = useRef<HTMLPreElement>(null);
 
-	const [lines, setLines] = useState<Token[][]>([]);
+	const [lines, setLines] = useState<SyntaxToken[][]>([]);
 	const [parseError, setParseError] = useState<string | null>(null);
 	const [copied, setCopied] = useState(false);
 	const [isHovering, setIsHovering] = useState(false);
@@ -231,19 +237,14 @@ export const Syntax = ({
 
 		const loadAcorn = async () => {
 			try {
-				// Importamos dinámicamente para asegurar que exista en el entorno del navegador
 				const acorn = await import("acorn");
 				const jsx = await import("acorn-jsx");
 
-				// Fix: No usaremos acorn-typescript debido a problemas de compatibilidad
-				// Simplemente usamos acorn con el plugin jsx
 				const Parser = acorn.Parser.extend(
 					jsx.default({ allowNamespaces: true }),
 				);
 
 				try {
-					// Parseamos el código - pero esto es opcional,
-					// ya que nuestro sistema de tokenización usa principalmente RegEx
 					Parser.parse(code, {
 						ecmaVersion: "latest",
 						sourceType: "module",
@@ -252,29 +253,55 @@ export const Syntax = ({
 					});
 				} catch (parseError) {
 					console.warn("Parse warning (non-fatal):", parseError);
-					// Continuamos con la tokenización aunque falle el parser
-					// porque nuestro sistema de tokens se basa en RegEx
 				}
 
-				// Extraemos tokens manualmente - Acorn no tiene API directa para tokens
-				const tokens: Token[] = [];
+				// Extract tokens manually using regex-based tokenization
+				const tokens: SyntaxToken[] = [];
 
-				// Estructura de tokenización ordenada
+				// Track which parts of code are already tokenized to prevent overlap
+				const tokenizedRanges: Array<{
+					start: number;
+					end: number;
+					type: string;
+				}> = [];
+
+				// Helper to check if a range has already been tokenized
+				const isRangeTokenized = (start: number, end: number): boolean => {
+					return tokenizedRanges.some(
+						(range) =>
+							(start >= range.start && start < range.end) ||
+							(end > range.start && end <= range.end) ||
+							(start <= range.start && end >= range.end),
+					);
+				};
+
+				// Helper to add a token and mark its range as tokenized
+				const addToken = (token: SyntaxToken): void => {
+					tokens.push(token);
+					tokenizedRanges.push({
+						start: token.start,
+						end: token.end,
+						type: token.type,
+					});
+				};
+
+				// Tokenization steps with comments and strings first to protect their contents
 				const tokenizationOrder = [
-					{
-						regex: /(["'`])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g,
-						type: "string",
-					},
+					// Process comments first to protect their content
 					{
 						regex: /\/\/.*?(?:\n|$)|\/\*[\s\S]*?\*\//g,
 						type: "comment",
 					},
-					// Add TypeScript interface detection (before variable detection)
+					// Then strings so they're also protected
+					{
+						regex: /(["'`])(?:\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/g,
+						type: "string",
+					},
+					// TypeScript interface detection
 					{
 						regex: /\b(interface|type)\s+([A-Za-z_][A-Za-z0-9_]*)/g,
 						type: "interface",
-						processFn: (match: RegExpExecArray, tokens: Token[]) => {
-							// Match the keyword "interface" or "type"
+						processFn: (match: RegExpExecArray, tokens: SyntaxToken[]) => {
 							const keyword = match[1];
 							const interfaceName = match[2];
 							const start = match.index;
@@ -286,7 +313,6 @@ export const Syntax = ({
 							const codeBeforeMatch = code.substring(0, start);
 							const line = (codeBeforeMatch.match(/\n/g) || []).length + 1;
 
-							// Add the keyword token
 							tokens.push({
 								value: keyword,
 								type: "keyword",
@@ -295,7 +321,6 @@ export const Syntax = ({
 								line,
 							});
 
-							// Add whitespace token
 							if (nameStart > keywordEnd) {
 								tokens.push({
 									value: match[0].substring(
@@ -309,7 +334,6 @@ export const Syntax = ({
 								});
 							}
 
-							// Add the interface name token
 							tokens.push({
 								value: interfaceName,
 								type: "interface",
@@ -318,14 +342,14 @@ export const Syntax = ({
 								line,
 							});
 
-							return true; // We handled this match manually
+							return true;
 						},
 					},
-					// Add TypeScript type annotation detection
+					// TypeScript type annotation detection
 					{
 						regex: /:\s*([A-Za-z_][A-Za-z0-9_<>[\]{}|&,\s]*)\b/g,
 						type: "type",
-						processFn: (match: RegExpExecArray, tokens: Token[]) => {
+						processFn: (match: RegExpExecArray, tokens: SyntaxToken[]) => {
 							const colonPos = match.index;
 							const typeStart = match.index + match[0].indexOf(match[1], 1);
 							const typeEnd = typeStart + match[1].length;
@@ -333,7 +357,6 @@ export const Syntax = ({
 							const codeBeforeMatch = code.substring(0, colonPos);
 							const line = (codeBeforeMatch.match(/\n/g) || []).length + 1;
 
-							// Add the colon token
 							tokens.push({
 								value: ":",
 								type: "punctuation",
@@ -342,7 +365,6 @@ export const Syntax = ({
 								line,
 							});
 
-							// Add whitespace if any
 							if (typeStart > colonPos + 1) {
 								tokens.push({
 									value: match[0].substring(1, match[0].indexOf(match[1], 1)),
@@ -353,7 +375,6 @@ export const Syntax = ({
 								});
 							}
 
-							// Add the type token
 							tokens.push({
 								value: match[1],
 								type: "type",
@@ -362,7 +383,7 @@ export const Syntax = ({
 								line,
 							});
 
-							return true; // We handled this match manually
+							return true;
 						},
 					},
 					{
@@ -370,7 +391,7 @@ export const Syntax = ({
 						type: "number",
 					},
 					{
-						regex: /<\/?[A-Za-z][a-zA-Z0-9]*(?:\s|\/?>|$)/g, // Improved JSX tag detection
+						regex: /<\/?[A-Za-z][a-zA-Z0-9]*(?:\s|\/?>|$)/g,
 						type: "jsxTag",
 					},
 					{
@@ -395,40 +416,44 @@ export const Syntax = ({
 					},
 				];
 
-				// Update the processing function to handle custom processors
 				const processTokenizationStep = (
 					regex: RegExp,
 					tokenType: string,
-					processFn?: (match: RegExpExecArray, tokens: Token[]) => boolean,
+					processFn?: (
+						match: RegExpExecArray,
+						tokens: SyntaxToken[],
+					) => boolean,
 				) => {
 					let match = regex.exec(code);
 					while (match !== null) {
-						// If there's a custom processor, use it
-						if (processFn) {
-							const processed = processFn(match, tokens);
-							if (processed) {
-								match = regex.exec(code);
-								continue;
-							}
-						}
-
-						// Standard token processing
-						const value = match[0];
 						const start = match.index;
-						const end = start + value.length;
+						const end = start + match[0].length;
 
-						const codeBeforeMatch = code.substring(0, start);
-						const line = (codeBeforeMatch.match(/\n/g) || []).length + 1;
+						// Skip if this range is already tokenized
+						if (!isRangeTokenized(start, end)) {
+							if (processFn) {
+								const processed = processFn(match, tokens);
+								if (processed) {
+									// If processFn handled it, we still need to mark these ranges
+									// Assuming processFn added appropriate tokens to the tokens array
+									const addedTokens = tokens.slice(tokens.length - 3); // Approximate number from interface processFn
+									addedTokens.forEach((token) => {
+										tokenizedRanges.push({
+											start: token.start,
+											end: token.end,
+											type: token.type,
+										});
+									});
+									match = regex.exec(code);
+									continue;
+								}
+							}
 
-						// Verificar que no esté dentro de un token ya definido
-						const overlapping = tokens.some(
-							(token) =>
-								(start >= token.start && start < token.end) ||
-								(end > token.start && end <= token.end),
-						);
+							const value = match[0];
+							const codeBeforeMatch = code.substring(0, start);
+							const line = (codeBeforeMatch.match(/\n/g) || []).length + 1;
 
-						if (!overlapping) {
-							tokens.push({
+							addToken({
 								value,
 								type: tokenType,
 								start,
@@ -441,24 +466,21 @@ export const Syntax = ({
 					}
 				};
 
-				// Aplicar cada paso de tokenización
+				// Apply each tokenization step
 				for (const { regex, type, processFn } of tokenizationOrder) {
 					processTokenizationStep(regex, type, processFn);
 				}
 
 				// Add whitespace and unrecognized characters as tokens
-				// This is crucial for preserving spacing
-				const processedRanges: [number, number][] = tokens.map((t) => [
-					t.start,
-					t.end,
-				]);
-				processedRanges.sort((a, b) => a[0] - b[0]);
-
+				// but only for ranges not already tokenized
 				let lastEnd = 0;
 				const gaps: [number, number][] = [];
 
-				// Find gaps between tokens
-				for (const [start, end] of processedRanges) {
+				// Sort tokenized ranges by start position
+				tokenizedRanges.sort((a, b) => a.start - b.start);
+
+				// Find gaps between tokenized ranges
+				for (const { start, end } of tokenizedRanges) {
 					if (start > lastEnd) {
 						gaps.push([lastEnd, start]);
 					}
@@ -476,7 +498,7 @@ export const Syntax = ({
 					const codeBeforeMatch = code.substring(0, start);
 					const line = (codeBeforeMatch.match(/\n/g) || []).length + 1;
 
-					tokens.push({
+					addToken({
 						value,
 						type: "whitespace",
 						start,
@@ -485,27 +507,24 @@ export const Syntax = ({
 					});
 				}
 
-				// Ordenamos los tokens por posición
+				// Sort tokens by position
 				tokens.sort((a, b) => a.start - b.start);
 
 				// Get the total number of lines in the code
 				const totalLines = code.split("\n").length;
 
-				// Create an array to hold tokens for each line
-				const lineGroups: Token[][] = Array(totalLines)
+				// Create array for tokens by line
+				const lineGroups: SyntaxToken[][] = Array(totalLines)
 					.fill(0)
 					.map(() => []);
 
-				// Process each token to place it in the correct line
+				// Process tokens for line-by-line rendering
 				for (const token of tokens) {
-					// Check if the token contains line breaks
 					if (token.value.includes("\n")) {
-						// Split the token by line breaks
 						const lines = token.value.split("\n");
 						let currentLine = token.line;
 						let currentPos = token.start;
 
-						// Process each line segment
 						for (let i = 0; i < lines.length; i++) {
 							const lineContent = lines[i];
 							if (lineContent.length > 0) {
@@ -521,7 +540,6 @@ export const Syntax = ({
 									line: currentLine,
 								});
 							} else if (i < lines.length - 1) {
-								// Add an empty line token for line breaks
 								lineGroups[currentLine - 1].push({
 									value: "\n",
 									type: "whitespace",
@@ -532,12 +550,11 @@ export const Syntax = ({
 							}
 
 							if (i < lines.length - 1) {
-								currentPos += lineContent.length + 1; // +1 for the '\n'
+								currentPos += lineContent.length + 1;
 								currentLine++;
 							}
 						}
 					} else {
-						// If no line breaks, just add the token to its line
 						if (token.line > 0 && token.line <= lineGroups.length) {
 							lineGroups[token.line - 1].push(token);
 						}
@@ -557,7 +574,7 @@ export const Syntax = ({
 					}
 				}
 
-				// Sort tokens within each line by their start position
+				// Sort tokens within each line
 				for (let i = 0; i < lineGroups.length; i++) {
 					lineGroups[i].sort((a, b) => a.start - b.start);
 				}
@@ -568,7 +585,7 @@ export const Syntax = ({
 				console.error("Error parsing code:", error);
 				setParseError(String(error));
 
-				// Fallback: mostramos el código sin resaltado
+				// Fallback: show code without highlighting
 				const codeLines = code.split("\n");
 				const fallbackLines = codeLines.map((line, idx) => [
 					{
@@ -577,7 +594,7 @@ export const Syntax = ({
 						start: 0,
 						end: line.length,
 						line: idx + 1,
-					},
+					} as SyntaxToken,
 				]);
 
 				setLines(fallbackLines);
@@ -587,12 +604,31 @@ export const Syntax = ({
 		loadAcorn();
 	}, [code, isVisible]);
 
+	// Handle keyboard shortcuts for accessibility
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLDivElement>) => {
+			// Ctrl+A or Cmd+A to select all text
+			if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+				e.preventDefault();
+
+				if (codeRef.current) {
+					const selection = window.getSelection();
+					const range = document.createRange();
+					range.selectNodeContents(codeRef.current);
+					selection?.removeAllRanges();
+					selection?.addRange(range);
+				}
+			}
+		},
+		[],
+	);
+
 	// If this tab is not active and it's part of a container, don't render it
 	if (!isVisible) {
 		return null;
 	}
 
-	// Si no hay líneas procesadas, mostramos texto plano
+	// If no processed lines, show plain text
 	if (lines.length === 0) {
 		const codeLines = code.split("\n");
 		return (
@@ -602,8 +638,10 @@ export const Syntax = ({
 				<ScrollArea.Viewport
 					className="p-4"
 					style={{ maxHeight: isStandalone ? maxHeight : undefined }}
+					onKeyDown={handleKeyDown}
+					tabIndex={0}
 				>
-					<pre className="font-mono text-sm relative">
+					<pre ref={codeRef} className="font-mono text-sm relative">
 						{codeLines.map((line, lineIndex) => (
 							<div key={`line-${lineIndex}-${line}`} className="flex">
 								{showLineNumbers && (
@@ -645,9 +683,11 @@ export const Syntax = ({
 					<ScrollArea.Viewport
 						className="p-4"
 						style={{ maxHeight: isStandalone ? maxHeight : undefined }}
+						onKeyDown={handleKeyDown}
+						tabIndex={0}
 					>
-						<pre className="font-mono text-sm">
-							{lines.map((lineTokens: Token[], lineIndex: number) => (
+						<pre ref={codeRef} className="font-mono text-sm">
+							{lines.map((lineTokens: SyntaxToken[], lineIndex: number) => (
 								<div
 									key={`line-${lineIndex}-${lineTokens.map((t) => t.value).join("")}`}
 									className="flex"
@@ -660,7 +700,7 @@ export const Syntax = ({
 									<div className="flex-1">
 										{lineTokens.length > 0 ? (
 											<>
-												{lineTokens.map((token: Token) => {
+												{lineTokens.map((token: SyntaxToken) => {
 													const colorClass =
 														tokenColors[token.type as keyof typeof tokenColors];
 													return (
@@ -674,7 +714,6 @@ export const Syntax = ({
 												})}
 											</>
 										) : (
-											// Empty line
 											<span>&nbsp;</span>
 										)}
 									</div>

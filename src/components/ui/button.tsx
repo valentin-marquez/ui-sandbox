@@ -97,77 +97,131 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 		const { side = "bottom" } = iconConfig || {};
 		const animConfig = loadingAnimations[side];
 
-		if (asChild) {
-			return (
-				<Slot
-					className={cn(buttonVariants({ variant, size }), className)}
-					ref={ref}
-					{...props}
-				/>
-			);
-		}
-
 		const getIconSize = () => {
 			if (size === "sm") return "size-3.5";
 			if (size === "lg" || size === "icon") return "size-5";
 			return "size-4";
 		};
 
+		// Handle standard button case
+		if (!asChild) {
+			return (
+				<motion.button
+					className={cn(buttonVariants({ variant, size }), className)}
+					transition={{ type: "spring", stiffness: 300, damping: 20 }}
+					ref={ref}
+					{...motionProps}
+					{...props}
+				>
+					{/* Invisible placeholder to maintain button size */}
+					<span className="invisible" aria-hidden="true">
+						{children}
+					</span>
+
+					<div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+						<AnimatePresence mode="popLayout" initial={false}>
+							{showIcon ? (
+								<motion.div
+									key="icon"
+									className="absolute inset-0 flex items-center justify-center"
+									initial={animConfig.loaderExit}
+									animate={animConfig.loaderEnter}
+									exit={animConfig.loaderExit}
+									transition={animConfig.transition}
+								>
+									{icon ? (
+										<Slot className={cn(getIconSize())}>{icon}</Slot>
+									) : (
+										<motion.div
+											animate={{ rotate: 360 }}
+											transition={{
+												repeat: Number.POSITIVE_INFINITY,
+												duration: 0.8,
+												ease: "linear",
+											}}
+										>
+											<Loader2 className={cn(getIconSize())} />
+										</motion.div>
+									)}
+								</motion.div>
+							) : (
+								<motion.span
+									key="content"
+									className="absolute inset-0 flex items-center justify-center"
+									initial={animConfig.textExit}
+									animate={animConfig.textEnter}
+									exit={animConfig.textExit}
+									transition={animConfig.transition}
+								>
+									{children}
+								</motion.span>
+							)}
+						</AnimatePresence>
+					</div>
+				</motion.button>
+			);
+		}
+
+		// Handle asChild case - Slot expects a single child
 		return (
-			// @ts-expect-error: `asChild` is not a valid prop for motion.button
-			<motion.button
+			<Slot
 				className={cn(buttonVariants({ variant, size }), className)}
-				transition={{ type: "spring", stiffness: 300, damping: 20 }}
 				ref={ref}
-				{...motionProps}
 				{...props}
 			>
-				{/* Invisible placeholder to maintain button size */}
-				<span className="invisible" aria-hidden="true">
-					{children}
-				</span>
+				{React.isValidElement(children) &&
+					React.cloneElement(
+						children,
+						{},
+						<>
+							{/* Invisible placeholder to maintain button size */}
+							<span className="invisible" aria-hidden="true">
+								{children.props.children}
+							</span>
 
-				<div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-					<AnimatePresence mode="popLayout" initial={false}>
-						{showIcon ? (
-							<motion.div
-								key="icon"
-								className="absolute inset-0 flex items-center justify-center"
-								initial={animConfig.loaderExit}
-								animate={animConfig.loaderEnter}
-								exit={animConfig.loaderExit}
-								transition={animConfig.transition}
-							>
-								{icon ? (
-									<Slot className={cn(getIconSize())}>{icon}</Slot>
-								) : (
-									<motion.div
-										animate={{ rotate: 360 }}
-										transition={{
-											repeat: Number.POSITIVE_INFINITY,
-											duration: 0.8,
-											ease: "linear",
-										}}
-									>
-										<Loader2 className={cn(getIconSize())} />
-									</motion.div>
-								)}
-							</motion.div>
-						) : (
-							<motion.span
-								key="content"
-								className="absolute inset-0 flex items-center justify-center"
-								initial={animConfig.textExit}
-								animate={animConfig.textEnter}
-								exit={animConfig.textExit}
-								transition={animConfig.transition}
-							>
-								{children}
-							</motion.span>
-						)}
-					</AnimatePresence>
-				</div>
-			</motion.button>
+							<div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+								<AnimatePresence mode="popLayout" initial={false}>
+									{showIcon ? (
+										<motion.div
+											key="icon"
+											className="absolute inset-0 flex items-center justify-center"
+											initial={animConfig.loaderExit}
+											animate={animConfig.loaderEnter}
+											exit={animConfig.loaderExit}
+											transition={animConfig.transition}
+										>
+											{icon ? (
+												<Slot className={cn(getIconSize())}>{icon}</Slot>
+											) : (
+												<motion.div
+													animate={{ rotate: 360 }}
+													transition={{
+														repeat: Number.POSITIVE_INFINITY,
+														duration: 0.8,
+														ease: "linear",
+													}}
+												>
+													<Loader2 className={cn(getIconSize())} />
+												</motion.div>
+											)}
+										</motion.div>
+									) : (
+										<motion.span
+											key="content"
+											className="absolute inset-0 flex items-center justify-center"
+											initial={animConfig.textExit}
+											animate={animConfig.textEnter}
+											exit={animConfig.textExit}
+											transition={animConfig.transition}
+										>
+											{children.props.children}
+										</motion.span>
+									)}
+								</AnimatePresence>
+							</div>
+						</>,
+					)}
+			</Slot>
 		);
 	},
 );

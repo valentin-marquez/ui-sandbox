@@ -17,6 +17,12 @@ import syntaxSource from "@/components/ui/syntax.tsx?raw";
 import syntaxExample from "@/examples/syntax";
 import { metadata as syntaxMetadata } from "@/metadata/syntax";
 
+// Marquee component imports
+import * as marqueeModule from "@/components/ui/marquee";
+import marqueeSource from "@/components/ui/marquee.tsx?raw";
+import marqueeExample from "@/examples/marquee";
+import { metadata as marqueeMetadata } from "@/metadata/marquee";
+
 // Types
 import type { ComponentMetadata } from "@/types/component";
 
@@ -45,6 +51,12 @@ export const componentRegistry: Record<string, ComponentEntry> = {
 		example: syntaxExample,
 		metadata: syntaxMetadata,
 		source: syntaxSource,
+	},
+	marquee: {
+		component: marqueeModule,
+		example: marqueeExample,
+		metadata: marqueeMetadata,
+		source: marqueeSource,
 	},
 };
 
