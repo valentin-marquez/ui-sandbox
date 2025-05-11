@@ -1,62 +1,83 @@
 import { cn } from "@/lib/utils";
-import { type VariantProps, cva } from "class-variance-authority";
-import type { HTMLAttributes } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 
-// Speed durations in milliseconds
-const speedValues = {
-	fast: "10s",
-	normal: "15s",
-	slow: "30s",
-};
+export interface MarqueeProps extends ComponentPropsWithoutRef<"div"> {
+	/**
+	 * The content to be displayed in the marquee
+	 */
+	children: React.ReactNode;
+	/**
+	 * Direction of the marquee animation
+	 * @default "left"
+	 */
+	direction?: "left" | "right";
+	/**
+	 * Speed of the marquee animation (in seconds for one complete cycle)
+	 * @default 20
+	 */
+	speed?: number;
+	/**
+	 * Gap between repeated content
+	 * @default "1rem"
+	 */
+	gap?: string;
+	/**
+	 * Whether to pause the animation on hover
+	 * @default false
+	 */
+	pauseOnHover?: boolean;
+	/**
+	 * Number of times to repeat the content
+	 * @default 3
+	 */
+	repeat?: number;
+}
 
-const marquee = cva("flex items-center whitespace-nowrap w-max", {
-	variants: {
-		gap: {
-			sm: "gap-2 pl-2",
-			md: "gap-4 pl-4",
-			lg: "gap-6 pl-6",
-		},
-	},
-	defaultVariants: {
-		gap: "md",
-	},
-});
-
-type MarqueeProps = HTMLAttributes<HTMLDivElement> &
-	VariantProps<typeof marquee> & {
-		speed?: "fast" | "normal" | "slow";
-		direction?: "left" | "right";
-		gap?: "sm" | "md" | "lg";
-	};
-
-const Marquee = ({
-	className,
-	gap = "md",
-	speed = "normal",
-	direction = "left",
+export function Marquee({
 	children,
+	direction = "left",
+	speed = 20,
+	gap = "1rem",
+	pauseOnHover = false,
+	repeat = 3,
+	className,
 	...props
-}: MarqueeProps) => {
-	const animationDuration = speedValues[speed];
-	const animationDirection = direction === "left" ? "" : "reverse";
+}: MarqueeProps) {
+	// Using CSS variables for animation configuration
+	const containerStyles = {
+		"--gap": gap,
+		"--duration": `${speed}s`,
+	} as React.CSSProperties;
 
 	return (
-		<div className="overflow-clip">
+		<div
+			className={cn("relative w-full overflow-hidden", className)}
+			style={containerStyles}
+			{...props}
+		>
 			<div
 				className={cn(
-					marquee({ gap }),
-					`animate-[marquee_${animationDuration}_linear_infinite_${animationDirection}]`,
-					"transform-gpu",
-					className,
+					"group flex w-full",
+					pauseOnHover && "hover:[&>*]:[animation-play-state:paused]",
 				)}
-				{...props}
 			>
-				{children}
+				{/* Create multiple instances of the content with proper animation */}
+				{Array(repeat)
+					.fill(0)
+					.map((_, i) => (
+						<div
+							key={`marquee-${direction}-${i}`}
+							className={cn(
+								"flex shrink-0 items-center gap-[var(--gap)]",
+								direction === "left"
+									? "animate-[marquee-left_var(--duration)_linear_infinite]"
+									: "animate-[marquee-right_var(--duration)_linear_infinite]",
+							)}
+						>
+							{Array.isArray(children) ? children : [children]}
+						</div>
+					))}
 			</div>
 		</div>
 	);
-};
-
-Marquee.displayName = "Marquee";
-
-export { Marquee };
+}
