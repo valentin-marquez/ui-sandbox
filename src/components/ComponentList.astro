@@ -35,12 +35,17 @@ const sortedComponents = componentsArray.sort((a, b) => {
 			.filter((component) => component !== null)
 			.map((component) => (
 				<a
-					href={`/playground/${component.name.toLowerCase()}`}
-					class="block bg-card hover:bg-card/90 border-2 border-border rounded-lg p-6 transition-colors shadow-md hover:shadow-lg">
-					<div class="flex justify-between items-start mb-4">
-						<h3 class="text-xl font-medium">{component.name}</h3>
+					href={
+						showPlaygroundLinks
+							? `/playground/${component.name.toLowerCase()}`
+							: `/playground/${component.name.toLowerCase()}`
+					}
+					class="group rounded-lg border bg-card p-5 transition-all hover:bg-muted/50 hover:shadow-md"
+					transition:name={`component-card-${component.name.toLowerCase()}`}>
+					<div class="flex justify-between items-center mb-3">
+						<h2 class="text-lg font-medium">{component.name}</h2>
 						<span
-							class={`text-xs px-2 py-1 rounded ${
+							class={`rounded-full px-2 py-0.5 text-xs ${
 								component.status === "completed"
 									? "bg-primary/20 text-primary"
 									: component.status === "in-progress"
@@ -50,7 +55,7 @@ const sortedComponents = componentsArray.sort((a, b) => {
 							{component.status}
 						</span>
 					</div>
-					<p class="text-muted-foreground">{component.description}</p>
+					<p class="text-muted-foreground text-sm">{component.description}</p>
 				</a>
 			))
 	}

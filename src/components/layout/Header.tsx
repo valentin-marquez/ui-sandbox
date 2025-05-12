@@ -1,3 +1,4 @@
+import GitHub from "@/components/icons/GitHub";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValueEvent, useScroll } from "motion/react";
@@ -113,9 +114,26 @@ export const Header: React.FC<HeaderProps> = ({ className }) => {
 							</ul>
 						</nav>
 
-						<motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-							<ModeToggle />
-						</motion.div>
+						<div className="flex items-center gap-3">
+							<motion.a
+								href="https://github.com/valentin-marquez/ui-sandbox"
+								target="_blank"
+								rel="noopener noreferrer"
+								whileHover={{ scale: 1.05 }}
+								whileTap={{ scale: 0.95 }}
+								className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground hover:bg-muted"
+								aria-label="GitHub repository"
+							>
+								<GitHub className="size-5" />
+							</motion.a>
+
+							<motion.div
+								whileHover={{ scale: 1.05 }}
+								whileTap={{ scale: 0.95 }}
+							>
+								<ModeToggle />
+							</motion.div>
+						</div>
 					</div>
 				</div>
 			</div>

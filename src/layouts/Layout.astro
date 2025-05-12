@@ -1,5 +1,6 @@
 ---
 import "@/styles/globals.css";
+import { ClientRouter } from "astro:transitions";
 import { Header } from "@/components/layout/Header";
 import Theme from "@/components/theme.astro";
 
@@ -18,7 +19,8 @@ const { title = "UI Sandbox" } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
+		<title transition:animate="fade">{title}</title>
+		<ClientRouter />
 	</head>
 	<body>
 		<!-- Grain effect overlay -->
@@ -29,9 +31,71 @@ const { title = "UI Sandbox" } = Astro.props;
 			<Header client:load />
 
 			<!-- Add padding-top to account for fixed header -->
-			<main class="flex-grow pt-[72px]">
+			<main class="flex-grow pt-[72px]" transition:animate="slide">
 				<slot />
 			</main>
 		</div>
+		<script>
+			// Handle page transitions with loading state
+			document.addEventListener("astro:before-preparation", () => {
+				// You could add a loading indicator here
+				document.documentElement.classList.add("is-transitioning");
+			});
+
+			document.addEventListener("astro:page-load", () => {
+				// Remove loading indicator
+				document.documentElement.classList.remove("is-transitioning");
+			});
+
+			// Ensure dark mode persists during view transitions
+			document.addEventListener("astro:before-swap", (event) => {
+				// Transfer dark mode setting to the new page
+				const isDark = document.documentElement.classList.contains("dark");
+				if (isDark) {
+					event.newDocument.documentElement.classList.add("dark");
+				} else {
+					event.newDocument.documentElement.classList.remove("dark");
+				}
+			});
+		</script>
 	</body>
 </html>
+
+<style is:global>
+	/* Add styling for transition states */
+	html.is-transitioning {
+		cursor: progress;
+	}
+
+	/* Optional: Add a custom animation for slide transition */
+	@keyframes slide-in {
+		from {
+			opacity: 0;
+			transform: translateX(20px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
+
+	@keyframes slide-out {
+		from {
+			opacity: 1;
+			transform: translateX(0);
+		}
+		to {
+			opacity: 0;
+			transform: translateX(-20px);
+		}
+	}
+
+	/* Respect user's motion preferences */
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(*),
+		::view-transition-old(*),
+		::view-transition-new(*) {
+			animation: none !important;
+		}
+	}
+</style>

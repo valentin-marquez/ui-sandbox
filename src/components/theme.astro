@@ -1,4 +1,5 @@
 <script is:inline>
+	// Function to get user theme preference
 	const getThemePreference = () => {
 		if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
 			return localStorage.getItem("theme");
@@ -7,9 +8,17 @@
 			? "dark"
 			: "light";
 	};
-	const isDark = getThemePreference() === "dark";
-	document.documentElement.classList[isDark ? "add" : "remove"]("dark");
 
+	// Function to apply theme
+	const applyTheme = () => {
+		const isDark = getThemePreference() === "dark";
+		document.documentElement.classList[isDark ? "add" : "remove"]("dark");
+	};
+
+	// Apply theme immediately
+	applyTheme();
+
+	// Handle theme changes
 	if (typeof localStorage !== "undefined") {
 		const observer = new MutationObserver(() => {
 			const isDark = document.documentElement.classList.contains("dark");
@@ -20,4 +29,14 @@
 			attributeFilter: ["class"],
 		});
 	}
+
+	// Handle theme persistence during view transitions
+	document.addEventListener("astro:after-swap", () => {
+		applyTheme();
+	});
+
+	// Also ensure theme is applied after full page load
+	document.addEventListener("astro:page-load", () => {
+		applyTheme();
+	});
 </script>

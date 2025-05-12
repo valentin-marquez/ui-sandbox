@@ -17,10 +17,14 @@ const title = `${componentTitle} - UI Sandbox`;
 
 <Layout title={title}>
 	<DotPattern dotColor="var(--border)" client:only />
-	<div class="mx-auto px-4">
+	<div class="mx-auto px-4" transition:animate="slide">
 		{
 			component ? (
-				<Playground client:load componentName={component} />
+				<Playground
+					client:load
+					componentName={component}
+					transition:name={`component-${component}`}
+				/>
 			) : (
 				<p class="text-muted-foreground text-center">
 					Select a component to display
